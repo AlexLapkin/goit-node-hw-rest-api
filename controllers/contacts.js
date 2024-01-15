@@ -1,3 +1,5 @@
+const { isValidObjectId } = require("mongoose");
+
 const contactService = require('../services/contacts');
 
 const { schemasJoi } = require('../models/contact');
@@ -15,11 +17,15 @@ const getAllContacts = async (req, res, next) => {
 const getContactById = async (req, res, next) => {
     try {
         const { id } = req.params;
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ message: "id is not valid" });
+        }
         const contact = await contactService.getContactById(id);
         if (!contact) {
             return res.status(404).json({ message: "Not found" });
         }
         res.json(contact);
+        
     } catch (err) {
         next(err);
     }
@@ -29,6 +35,9 @@ const getContactById = async (req, res, next) => {
 const removeContact = async (req, res, next) => {
     try {
         const { id } = req.params;
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ message: "id is not valid" });
+        }
         const contact = await contactService.removeContact(id);
         if (!contact) {
             return res.status(404).json({ message: "Not found" });
@@ -64,6 +73,9 @@ const updateContact = async (req, res, next) => {
             return res.status(400).json({ message: error.message });
         }
         const { id } = req.params;
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ message: "id is not valid" });
+        }
         const contact = await contactService.getContactById(id);
         if (!contact) {
             return res.status(404).json({ message: "Not found" });
@@ -84,11 +96,13 @@ const updateStatusContact = async (req, res, next) => {
             return res.status(400).json({ message: "missing field favorite" });
         }
         const { error } = schemasJoi.favoriteSchema.validate(req.body);
-        console.log(error)
         if (error) {
             return res.status(400).json({ message: error.message });
         }
         const { id } = req.params;
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ message: "id is not valid" });
+        }
         const contact = await contactService.getContactById(id);
         if (!contact) {
             return res.status(404).json({ message: "Not found" });
