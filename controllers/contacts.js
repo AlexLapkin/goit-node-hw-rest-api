@@ -62,7 +62,6 @@ const addContact = async (req, res, next) => {
     }
 };
 
-
 const updateContact = async (req, res, next) => {
     try {
         if (Object.keys(req.body).length === 0) {
