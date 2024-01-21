@@ -1,5 +1,3 @@
-const { isValidObjectId } = require("mongoose");
-
 const { schemasJoi } = require("../models/contact");
 
 const { Contact } = require("../models/contact");
@@ -18,9 +16,6 @@ const getAllContacts = async (req, res, next) => {
 const getContactById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    if (!isValidObjectId(id)) {
-      return res.status(400).json({ message: "id is not valid" });
-    }
     const contact = await Contact.findById(id);
     if (!contact) {
       return res.status(404).json({ message: "Not found" });
@@ -34,9 +29,6 @@ const getContactById = async (req, res, next) => {
 const removeContact = async (req, res, next) => {
   try {
     const { id } = req.params;
-    if (!isValidObjectId(id)) {
-      return res.status(400).json({ message: "id is not valid" });
-    }
     const contact = await Contact.findByIdAndDelete(id);
     if (!contact) {
       return res.status(404).json({ message: "Not found" });
@@ -71,9 +63,6 @@ const updateContact = async (req, res, next) => {
       return res.status(400).json({ message: error.message });
     }
     const { id } = req.params;
-    if (!isValidObjectId(id)) {
-      return res.status(400).json({ message: "id is not valid" });
-    }
     const contact = await Contact.findById(id);
     if (!contact) {
       return res.status(404).json({ message: "Not found" });
@@ -99,9 +88,6 @@ const updateStatusContact = async (req, res, next) => {
       return res.status(400).json({ message: error.message });
     }
     const { id } = req.params;
-    if (!isValidObjectId(id)) {
-      return res.status(400).json({ message: "id is not valid" });
-    }
     const contact = await Contact.findById(id);
     if (!contact) {
       return res.status(404).json({ message: "Not found" });
