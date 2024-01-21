@@ -14,11 +14,4 @@ router.post('/logout', auth, authControllers.logout);
 
 router.get('/current', auth, authControllers.getCurrent);
 
-// router.patch(
-//    "/subscription",
-//    authenticate,
-//    validateBody(schemas.updateSubscriptionSchema),
-//    ctrl.updateSubscription
-//  );
-    
 module.exports = router;
