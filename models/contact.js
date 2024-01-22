@@ -42,7 +42,7 @@ const addContactSchema = Joi.object({
     .required()
     .messages({ "any.required": "missing required email field" }),
   phone: Joi.string()
-    .pattern(/^[(][\d]{3}[)]\s[\d]{3}[-][\d]{4}/)
+    // .pattern(/^[(][\d]{3}[)]\s[\d]{3}[-][\d]{4}/)
     .required()
     .messages({ "any.required": "missing required phone field" }),
   favorite: Joi.boolean(),
