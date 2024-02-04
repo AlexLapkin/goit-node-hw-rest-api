@@ -6,10 +6,14 @@ const path = require("path");
 const Jimp = require("jimp");
 const fs = require("fs/promises");
 
+const crypto = require("node:crypto");
+
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { SECRET_KEY } = process.env;
+const { SECRET_KEY, BASE_URL } = process.env;
 const avatarsDir = path.join(__dirname, "../", "public", "avatars");
+
+const sendEmail = require("../helpers/sendEmail");
 
 // Register
 const register = async (req, res, next) => {
@@ -27,17 +31,78 @@ const register = async (req, res, next) => {
 
     const hashPassword = await bcrypt.hash(password, 10);
     const avatarURL = gravatar.url(email);
+    const verificationToken = crypto.randomUUID();
     const newUser = await User.create({
       email,
       password: hashPassword,
       avatarURL,
+      verificationToken,
     });
+
+    const verifyEmail = {
+      to: email,
+      subject: "Verify your email",
+      html: `<a href="${BASE_URL}/users/verify/${verificationToken}" target="_blank">Click for verify email</a>`,
+    };
+    await sendEmail(verifyEmail);
+
     if (!newUser) {
       return res.status(409).json({ message: "Email in use" });
     }
     res.status(201).json({
       email: newUser.email,
       subscription: newUser.subscription,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+    const user = await User.findOne({ verificationToken });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    await User.findByIdAndUpdate(user._id, {
+      verify: true,
+      verificationToken: null,
+    });
+    res.status(200).json({
+      message: "Verification successful",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const resendVerifyEmail = async (req, res, next) => {
+  try {
+    const { error } = schemas.resendVerifyEmail.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: "missing required field email" });
+    }
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    if (user.verify) {
+      return res
+        .status(400)
+        .json({ message: "Verification has already been passed" });
+    }
+
+    const verifyEmail = {
+      to: email,
+      subject: "Verify your email",
+      html: `<a href="${BASE_URL}/api/auth/verify/${user.verificationToken}" target="_blank">Click for verify email</a>`,
+    };
+    await sendEmail(verifyEmail);
+
+    res.status(200).json({
+      message: "Verification email sent",
     });
   } catch (err) {
     next(err);
@@ -57,6 +122,11 @@ const login = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: "Email or password is wrong" });
     }
+
+    if (!user.verify) {
+      return res.status(401).json({ message: "Email not verified" });
+    }
+
     const passwordCompare = await bcrypt.compare(password, user.password);
     if (!passwordCompare) {
       return res.status(401).json({ message: "Email or password is wrong" });
@@ -135,6 +205,8 @@ const updateAvatar = async (req, res, next) => {
 
 module.exports = {
   register,
+  verifyEmail,
+  resendVerifyEmail,
   login,
   logout,
   getCurrent,
